@@ -1,0 +1,54 @@
+Design Challenge – Camera Component
+Name: Utkarsh Kumar
+Email: utkarshgupta013n21@gmail.com
+
+🔹 Part 1: useFront Property Issue
+
+The `useFront` property in App Inventor's Camera component previously allowed users to specify whether the front camera should be used by default. However, this no longer works reliably due to changes introduced in the Android Camera APIs.
+
+With the introduction of the Camera2 API and the deprecation of the original Camera class in Android 5.0 (API level 21), control over camera selection became more complex. The original implementation relied on setting intent extras when launching a camera intent (e.g., `android.intent.extras.CAMERA_FACING`), but this is no longer guaranteed to be respected by all camera apps or OEMs. Moreover, the newer APIs require direct control over the camera hardware, which App Inventor currently doesn’t use (as it relies on system camera intents).
+
+🔹 Part 2: Design – Automatic Picture Capture
+
+Overview:
+Currently, the Camera component in App Inventor requires manual user interaction to take a picture. To support use cases like automation, motion-triggered photos, or time-lapse photography, we propose adding a way to take pictures programmatically, without showing the camera UI.
+
+Approach:
+We propose to extend the existing Camera component with a new method and a new property:
+
+- AutoCapture() – triggers a photo capture without opening the camera UI.
+- UseFrontCamera (boolean) – sets the default camera direction.
+
+Example Usage:
+Camera.UseFrontCamera = true  // Defaults to front camera
+Camera.AutoCapture()         // Takes photo silently
+
+Implementation Details:
+Since using intents won't allow silent picture capture, this feature would use Android's Camera2 API directly. This means bypassing the system camera app and accessing the camera hardware via permissions and lifecycle management.
+
+Suggested Files to Modify:
+- components/src/com/google/appinventor/components/runtime/Camera.java
+  → Add new method and property
+- components/src/com/google/appinventor/components/runtime/util/CameraUtil.java
+  → Add helper methods for Camera2
+- appengine/src/com/google/appinventor/client/components/MockCamera.java
+  → Update Designer UI
+- YoungAndroidComponents.xml
+  → Register new blocks
+
+Android SDK Features Used:
+- android.hardware.camera2
+- CameraManager and CameraDevice
+- Permissions: CAMERA, WRITE_EXTERNAL_STORAGE
+
+Sample Snippet:
+CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+String cameraId = getCameraId(UseFrontCamera);
+manager.openCamera(cameraId, stateCallback, null);
+// Then configure preview and capture session
+
+Why Extend Instead of Create New Component?
+It makes sense to extend the existing Camera component to maintain consistency and user familiarity. Creating a new component might fragment functionality and confuse beginners.
+
+Conclusion:
+This proposal modernizes the Camera component by addressing deprecated functionality and adding an essential feature — automatic picture capture. With proper permissions and fallback for unsupported devices, this would enhance App Inventor’s capability for automation, research, and IoT use cases.
